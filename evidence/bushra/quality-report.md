@@ -4,12 +4,11 @@
 
 * Tester: Bushra
 * Date: 2026-10-09
-* Git commit tested: To be recorded
-* Python version: To be recorded
+* Git commit tested: 809abb7
+* Python version: Python 3.14.7
 * Total automated tests: 10
 * Automated tests passed: 10
 * Automated tests failed: 0
-
 ## Manual access checks
 
 | Check | Expected | Actual | Pass/Fail | Screenshot |
@@ -39,8 +38,9 @@
 * All runs contain an access-removal event: Yes
 * All runs contain a message-creation event: Yes
 * All runs contain a final observation: Yes
-* Results can be reproduced: Not yet confirmed
-* Passwords or secrets visible in evidence: No
+* Automated test-suite repeatability: Confirmed (17 passed twice)
+* Passwords or secrets visible in evidence: No known exposure; .env is ignored and not tracked
+* Git history check for .env: No entries found
 ## Problems found
 
 * The initial message-creation test returned 201 because Alice's access had not yet been revoked.

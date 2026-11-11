@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 
 import pytest
@@ -236,5 +237,65 @@ def test_experiment_creation_requires_authentication(client: TestClient):
             "cutoff_seconds": 2,
         },
     )
+assert response.status_code == 401
+def test_revoked_alice_cannot_create_message(client: TestClient):
+    login(client, "admin", "admin-test-password")
 
-    assert response.status_code == 401
+    revoke = client.post("/projects/1/members/2/revoke")
+    assert revoke.status_code == 200
+
+    login(client, "alice", "alice-test-password")
+
+    response = client.post(
+        "/projects/1/messages",
+        json={
+            "message_code": "REVOKED-001",
+            "content": "Alice should not create this",
+        },
+    )
+
+    assert response.status_code == 403
+
+def test_experiment_timestamps_are_valid(client: TestClient):
+    login(client, "alice", "alice-test-password")
+
+    response = client.post(
+        "/experiments",
+        headers={"Idempotency-Key": "timestamp-test-001"},
+        json={
+            "project_id": 1,
+            "authorization_mode": "continuous",
+            "cutoff_seconds": 2,
+        },
+    )
+
+    assert response.status_code == 202
+    data = response.json()
+
+    assert data["created_at"]
+    datetime.fromisoformat(data["created_at"].replace("Z", "+00:00"))
+
+    for field in ("started_at", "completed_at"):
+        if data.get(field):
+            datetime.fromisoformat(data[field].replace("Z", "+00:00"))
+
+    for event in data["events"]:
+        assert event["occurred_at"]
+        datetime.fromisoformat(
+            event["occurred_at"].replace("Z", "+00:00")
+        )
+def test_messages_have_unique_ids(client: TestClient):
+    login(client, "alice", "alice-test-password")
+
+    first = client.post(
+        "/projects/1/messages",
+        json={"message_code": "UNIQUE-001", "content": "First"},
+    )
+    second = client.post(
+        "/projects/1/messages",
+        json={"message_code": "UNIQUE-002", "content": "Second"},
+    )
+
+assert first.status_code == 201
+assert second.status_code == 201
+assert first.json()["id"] != second.json()["id"]
